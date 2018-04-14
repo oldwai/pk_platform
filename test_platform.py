@@ -46,7 +46,7 @@ class Platform:
         url = ''.join(self.host, endpoint)
         return url
 
-    def post_response(self, url, **DataAll):
+    def post_response_json(self, url, **DataAll):
         """
         封装post请求的方法
         DataAll为一个字典，如json=data，files=files，传入的形式为{"json":data,"files":files}
@@ -71,8 +71,7 @@ class Platform:
         except Exception as e:
             print("Post请求错误：%s" % e)
 
-
-    def login_post(self, url, **DataAll):
+    def login_post_method(self, url, **DataAll):
         """
         封装post请求的方法
         DataAll为一个字典，如json=data，files=files，传入的形式为{"json":data,"files":files}
@@ -98,7 +97,7 @@ class Platform:
             else:
                 print('登录失败了',resp.content)
         except Exception as e:
-            print("login_post错误：%s" % e)
+            print("login_post_method错误：%s" % e)
 
     def login(self):
         """
@@ -110,7 +109,7 @@ class Platform:
                      }
         login_url = self.host + '/user/login'
         DataAll = {'json': post_data}
-        r = self.login_post(login_url, **DataAll)
+        r = self.login_post_method(login_url, **DataAll)
         if r:
             print('登录成功！')
         else:
@@ -149,8 +148,14 @@ class Platform:
                 time.sleep(0.5)
         return res
 
-
     def shopping_data(self):
+        '''
+        pricing请求需要的字段：adultNum、childNum、queryType、bookingCodes、flights-segments、solutionKey、gds
+        循环获读取 journeys 的GDS，满足条件的GDS则默认取第一个，需要拿到 segmentId、journeyId、GDS
+        通过 query 字段获取 adultCount， childCount
+        通过 segmentId 查找对应的航段，journeyId 判断行程类型和 solutionkey
+        :return: no return
+        '''
         res = self.shopping()
         # if type(res) isinstance:
         #     res = res.json()
