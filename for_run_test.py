@@ -19,9 +19,8 @@ from requests.packages.urllib3.exceptions import InsecureRequestWarning
 import urllib3
 
 
-
 class Platform:
-    def __init__(self, account, password, adultCount=1, specified_gds=None):
+    def __init__(self, account, password, specified_gds=None):
         if specified_gds:
             self.gds = specified_gds
         else:
@@ -30,7 +29,7 @@ class Platform:
         self.host = 'http://www.pkfare.com/platform-gateway'
         self.account = account
         self.password = password
-        self.adultCount =adultCount
+
         # requests库请求HTTPS时,因为忽略证书验证,会有警告，这里禁止警告
         requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
         urllib3.disable_warnings()  
@@ -152,7 +151,7 @@ class Platform:
         NOWDATE = (datetime.datetime.now() + datetime.timedelta(days=delay_day)).strftime('%Y-%m-%d')
         body_data3 = {'queryType': 1,
                       'childCount': 0,
-                      'adultCount': self.adultCount,
+                      'adultCount': 1,
                       'airline': None,
                       'tripList': [{'departureCode': 'SIN',
                                     'departureCodeAsAirport': 0,
@@ -179,10 +178,7 @@ class Platform:
             else:
                 print('第 %d 次' % i)
                 time.sleep(0.5)
-        if flag:
-            print('查询不到航班..........')
-        else:
-            return res
+        return res
 
     def res_pricing_para(self):
         '''
@@ -227,12 +223,6 @@ class Platform:
             segments_dict['departureDate'] = segments_info.get('departureDate')
             segments_dict['flightNum'] = segments_info.get('flightNumber')
             segments_list.append(segments_dict)
-            # arrival = segments_info.get('arrivalCode')
-            # arrivalDate = segments_info.get('arrivalDate')
-            # arrivalTime = segments_info.get('arrivalTime')
-            # departure = segments_info.get('departureCode')
-            # departureDate = segments_info.get('departureDate')
-            # flightNum = segments_info.get('flightNum')
 
         solutions_num = len(solutions)
         # 获取查询行程的类型queryType
@@ -252,11 +242,7 @@ class Platform:
                 solutionKey = solutions[i].get('solutionKey')
                 break
 
-        # print('solutionKey, queryType, bookingCodes, gds--------', solutionKey, queryType, bookingCodes, gds)
-        # ddd = (bookingCode_list, journeys_journeyId, gds, actul_journey_type)
-        # for i in iter(ddd):
-        #     print(i)
-        pricing_para = {'adultNum': self.adultCount,
+        pricing_para = {'adultNum': 1,
                         'childNum': 0,
                         'gds': gds,
                         'queryType': queryType,
@@ -310,33 +296,6 @@ class Platform:
                               'lastName': name,
                               'nationality': 'CN',
                               'firstName': name,
-                              'birthday': birthday},
-                             {'sex': 'M',
-                              'cardExpiredDate': '2024-03-17',
-                              'cardNum': 'E07700467',
-                              'cardType': 'PASSPORT',
-                              'psgType': 'ADT',
-                              'lastName': 'pkfarea',
-                              'nationality': 'CN',
-                              'firstName': 'pkfarea',
-                              'birthday': birthday},
-                             {'sex': 'M',
-                              'cardExpiredDate': '2024-03-17',
-                              'cardNum': 'E07700468',
-                              'cardType': 'PASSPORT',
-                              'psgType': 'ADT',
-                              'lastName': 'pkfareb',
-                              'nationality': 'CN',
-                              'firstName': 'pkfareb',
-                              'birthday': birthday},
-                             {'sex': 'M',
-                              'cardExpiredDate': '2024-03-17',
-                              'cardNum': 'E07700469',
-                              'cardType': 'PASSPORT',
-                              'psgType': 'ADT',
-                              'lastName': 'pkfarec',
-                              'nationality': 'CN',
-                              'firstName': 'pkfarec',
                               'birthday': birthday}],
                         'seat': {'seatKey': []},
                         'solutionKey': booking_solutionKey,
@@ -351,7 +310,7 @@ class Platform:
                         'couponKey': ''}
         DataAll = {'json': booking_data}
         res = self.post_response_json(booking_url, **DataAll)
-        print(res)
+        print('已完成下单，订单号为:',res['data']['orderNum'])
         return res
 
     def booking_ndc(self):
@@ -382,7 +341,7 @@ class Platform:
                         'couponKey': ''}
         DataAll = {'json': booking_data}
         res = self.post_response_json(booking_url, **DataAll)
-        print(res)
+        print('已完成下单，订单号为:', res['data']['orderNum'])
         return res
 
     def cancel_order(self):
@@ -394,42 +353,34 @@ class Platform:
 if __name__ == '__main__':
     login_acc = '12499029@qq.com'
     login_pass = 'a123456'
-    # promt = ('''
-    # ------------------------------------------
-    # 请输入正确的选项：
-    # 1、指定 1A 查询下单请输入
-    # 2、指定 NDC 查询下单
-    # 请选择您要指定的GDS，不指定默认使用1A.........
-    # ------------------------------------------
-    # ''')
-    # print(promt)
-    # num = input('请输入序号：')
-    # if num.isdigit() and (int(num) in [1,2]):
-    #     if num == '1':
-    #         specified_gds = '1A'
-    #     if num == '2':
-    #         specified_gds = 'HK-AY-NDC'
-    # else:
-    #     print(promt)
+    promt = ('''
+    ------------------------------------------
+    请输入正确的选项：
+    1、指定 1A 查询下单请输入
+    2、指定 NDC 查询下单
+    请选择您要指定的GDS，不指定默认使用1A.........
+    ------------------------------------------
+    ''')
+    print(promt)
+    flag = True
+    while flag:
+        num = input('请输入序号：')
+        if num.isdigit() and (int(num) in [1,2]):
+            if num == '1':
+                specified_gds = '1A'
+            if num == '2':
+                specified_gds = 'HK-AY-NDC'
+            flag = False
+        else:
+            print(promt)
     #specified_gds表示指定gds查询
-    test = Platform(login_acc, login_pass, specified_gds='HK-AY-NDC',adultCount=4)
-    # test = Platform(login_acc, login_pass)
+    test = Platform(login_acc, login_pass, specified_gds=specified_gds)
     test.login()
     # test.res_pricing_para()
     #booking_ndc暂时无法使用，返回为None时没做判断，生gds订单一样有问题
-    # test.booking()
-    test.booking_ndc()
-    # #
-    # # # print(json.dumps(body_data))
-    # # # print(type(json.dumps(body_data)))
-    # shopping_url = 'http://buyer.pkfare.com/purchase/shopping'
-    # DataAll = {'json': body_data2}
-    # res = test.post_response2(shopping_url, **DataAll)
-    # for i in range(1, 30):
-    #     res = test.post_response(shopping_url, **DataAll)
-    #     journeys = len(res['data']['journeys'])
-    #     if journeys:
-    #         break
-    #     else:
-    #         print('第 %d 次' % i)
-    #         time.sleep(0.5)
+    if num == '1':
+        test.booking()
+    if num == '2':
+        test.booking_ndc()
+
+    input("\n\nPress the enter key to exit.")
